@@ -1,0 +1,757 @@
+<title>Upkeep Build Roadmap</title>
+<style>
+  :root{
+    --ink:#0F1E2E;
+    --ink-soft:#4C6478;
+    --ink-faint:#7C8D9B;
+    --ground:#F4F6F5;
+    --surface:#FFFFFF;
+    --surface-2:#E7ECEA;
+    --line:#D3DBD8;
+    --line-strong:#B7C2BE;
+    --accent:#B5652D;
+    --accent-soft:#E8D3C2;
+    --st-ready:#2F7A5E;
+    --st-ready-bg:#DFEEE6;
+    --st-new:#4C6478;
+    --st-new-bg:#E7ECEA;
+    --shadow: 0 1px 2px rgba(15,30,46,0.05), 0 10px 28px -16px rgba(15,30,46,0.22);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#E9EEF1;
+      --ink-soft:#A9BAC4;
+      --ink-faint:#7E8FA0;
+      --ground:#0C1620;
+      --surface:#12202D;
+      --surface-2:#182838;
+      --line:#28394A;
+      --line-strong:#354A5E;
+      --accent:#E0925C;
+      --accent-soft:#3A2A1D;
+      --st-ready:#5FBF95;
+      --st-ready-bg:#173428;
+      --st-new:#93A6B5;
+      --st-new-bg:#1D2C3A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px -16px rgba(0,0,0,0.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#E9EEF1;
+    --ink-soft:#A9BAC4;
+    --ink-faint:#7E8FA0;
+    --ground:#0C1620;
+    --surface:#12202D;
+    --surface-2:#182838;
+    --line:#28394A;
+    --line-strong:#354A5E;
+    --accent:#E0925C;
+    --accent-soft:#3A2A1D;
+    --st-ready:#5FBF95;
+    --st-ready-bg:#173428;
+    --st-new:#93A6B5;
+    --st-new-bg:#1D2C3A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px -16px rgba(0,0,0,0.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:'Public Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+    font-size:15px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent-soft);color:var(--ink);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px;}
+  h1,h2,h3{text-wrap:balance;margin:0;font-family:'Archivo',system-ui,sans-serif;}
+  code, .mono{font-family:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important;transition-duration:.001ms !important;} }
+
+  .wrap{max-width:920px;margin:0 auto;padding:56px 28px 100px;}
+
+  /* ---------- Header ---------- */
+  .kicker{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--accent);font-weight:500;margin-bottom:14px;
+  }
+  h1.title{font-size:clamp(30px,4.4vw,42px);font-weight:800;letter-spacing:-0.015em;color:var(--ink);}
+  .subtitle{font-size:16px;color:var(--ink-soft);margin-top:10px;max-width:62ch;}
+
+  .stack-strip{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;
+  }
+  .stack-chip{
+    font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 11px;border-radius:6px;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);
+  }
+
+  .intro{
+    margin-top:28px;padding-top:24px;border-top:1px solid var(--line);
+    color:var(--ink);font-size:15px;max-width:66ch;
+  }
+  .intro p{margin:0 0 12px;}
+  .intro p:last-child{margin-bottom:0;}
+  .intro strong{color:var(--ink);}
+
+  /* ---------- Table of contents ---------- */
+  .toc{
+    margin-top:32px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:16px 20px;
+  }
+  .toc-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+  .toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 18px;}
+  .toc-item{
+    display:flex;gap:9px;align-items:baseline;font-size:13px;color:var(--ink-soft);text-decoration:none;padding:3px 0;
+  }
+  .toc-item:hover{color:var(--ink);}
+  .toc-num{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:600;min-width:1.4em;}
+
+  /* ---------- Spine ---------- */
+  .spine{position:relative;margin-top:52px;}
+  .spine::before{
+    content:"";position:absolute;left:23px;top:8px;bottom:8px;width:1.5px;background:var(--line-strong);
+  }
+
+  .slice{position:relative;padding-left:66px;margin-bottom:44px;scroll-margin-top:20px;}
+  .slice:last-child{margin-bottom:0;}
+  .slice-num{
+    position:absolute;left:0;top:0;width:47px;height:47px;border-radius:50%;
+    background:var(--surface);border:1.5px solid var(--line-strong);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:600;font-size:17px;color:var(--ink);
+    z-index:1;
+  }
+  .slice.milestone .slice-num{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+
+  .slice-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .slice-head{padding:18px 22px 16px;border-bottom:1px solid var(--line);}
+  .slice-head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .slice-title{font-size:18px;font-weight:700;color:var(--ink);}
+  .slice-goal{font-size:13.5px;color:var(--ink-soft);margin-top:5px;max-width:56ch;}
+  .badge{
+    flex:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;
+    letter-spacing:.01em;
+  }
+  .badge-ready{background:var(--st-ready-bg);color:var(--st-ready);}
+  .badge-new{background:var(--st-new-bg);color:var(--st-new);}
+
+  .slice-body{padding:18px 22px 20px;}
+  .facet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .facet-label{
+    font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);
+    margin-bottom:7px;
+  }
+  .facet ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .facet li{font-size:12.5px;color:var(--ink);line-height:1.45;}
+  .facet code{font-size:11.5px;background:var(--surface-2);border-radius:4px;padding:1px 5px;color:var(--ink);}
+
+  .dod{
+    margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);
+    display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--ink);
+  }
+  .dod-mark{flex:none;color:var(--st-ready);font-weight:700;margin-top:1px;}
+  .dod b{font-weight:600;color:var(--ink-faint);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-right:8px;}
+
+  /* ---------- Sequencing notes ---------- */
+  .notes{
+    margin-top:56px;padding-top:32px;border-top:1px solid var(--line);
+  }
+  .notes h2{font-size:20px;font-weight:700;margin-bottom:16px;}
+  .note-row{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);align-items:baseline;}
+  .note-row:last-child{border-bottom:none;}
+  .note-tag{
+    flex:none;width:96px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);
+    padding-top:1px;
+  }
+  .note-text{font-size:14px;color:var(--ink-soft);}
+  .note-text strong{color:var(--ink);font-weight:600;}
+
+  footer.page-foot{
+    margin-top:52px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink-faint);
+  }
+
+  @media (max-width:720px){
+    .facet-grid{grid-template-columns:1fr;gap:14px;}
+    .slice{padding-left:52px;}
+    .spine::before{left:17px;}
+    .slice-num{width:35px;height:35px;font-size:13px;}
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<div class="wrap">
+
+  <div class="kicker">Build plan · vertical slices</div>
+  <h1 class="title">Upkeep Build Roadmap</h1>
+  <p class="subtitle">From the working prototypes to a self-hosted production system on your VPS — thirteen slices, each one a complete cut from database to browser that you can actually use before the next slice starts.</p>
+
+  <div class="stack-strip">
+    <span class="stack-chip">Hono API</span>
+    <span class="stack-chip">PostgreSQL (dedicated container)</span>
+    <span class="stack-chip">Drizzle migrations</span>
+    <span class="stack-chip">Self-rolled session cookies</span>
+    <span class="stack-chip">MinIO / volume storage</span>
+    <span class="stack-chip">SSE + polling</span>
+    <span class="stack-chip">Caddy reverse proxy</span>
+    <span class="stack-chip">pg_dump backups</span>
+  </div>
+
+  <div class="intro">
+    <p>A <strong>vertical slice</strong> cuts through every layer — schema, API, UI, and auth where it applies — for one piece of real behaviour, instead of building all the database tables, then all the endpoints, then all the screens. Each slice below ends in something you can click through on the real domain, on real Postgres data, not a demo.</p>
+    <p>Slices 1–3 lean hard on the two prototypes you already have — most of that UI ports over close to as-is, the work is wiring it to a live API instead of <code>localStorage</code>. Slices 4 onward are net-new: units, leases, tenant accounts, and the maintenance workflow don't exist as real data yet.</p>
+  </div>
+
+  <div class="toc">
+    <div class="toc-label">Thirteen slices</div>
+    <div class="toc-grid">
+      <a class="toc-item" href="#s0"><span class="toc-num">00</span>Walking skeleton</a>
+      <a class="toc-item" href="#s1"><span class="toc-num">01</span>Pipeline capture &amp; board</a>
+      <a class="toc-item" href="#s2"><span class="toc-num">02</span>Activity &amp; visits</a>
+      <a class="toc-item" href="#s3"><span class="toc-num">03</span>Real photo storage</a>
+      <a class="toc-item" href="#s4"><span class="toc-num">04</span>Units &amp; leases</a>
+      <a class="toc-item" href="#s5"><span class="toc-num">05</span>Tenant accounts</a>
+      <a class="toc-item" href="#s6"><span class="toc-num">06</span>Maintenance tickets</a>
+      <a class="toc-item" href="#s7"><span class="toc-num">07</span>Maintenance team</a>
+      <a class="toc-item" href="#s8"><span class="toc-num">08</span>Live updates</a>
+      <a class="toc-item" href="#s9"><span class="toc-num">09</span>Portfolio reporting</a>
+      <a class="toc-item" href="#s10"><span class="toc-num">10</span>Documents</a>
+      <a class="toc-item" href="#s11"><span class="toc-num">11</span>Utility accounts</a>
+      <a class="toc-item" href="#s12"><span class="toc-num">12</span>Backups &amp; hardening</a>
+    </div>
+  </div>
+
+  <div class="spine">
+
+    <div class="slice milestone" id="s0">
+      <div class="slice-num">0</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Walking skeleton</div>
+              <div class="slice-goal">Prove the full path — browser to Postgres and back — is real on your VPS before any feature is built on top of it.</div>
+            </div>
+            <span class="badge badge-new">Net-new</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li>New dedicated <code>upkeep</code> Postgres container in the VPS compose file — its own volume, not shared with other apps</li>
+                <li><code>users</code> table (id, email, password_hash, role) — one seeded PM login</li>
+                <li><code>sessions</code> table for cookie-backed sessions</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>POST /api/auth/login</code>, <code>POST /api/auth/logout</code></li>
+                <li><code>GET /api/health</code> — round-trips a real query</li>
+                <li>Hono app scaffolded at <code>apps/api</code>, Drizzle schema at <code>packages/db</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>React + Vite app at <code>apps/web</code> — login screen, blank authenticated shell</li>
+                <li>Caddy: subdomain routed to the web app, <code>/api</code> proxied to Hono</li>
+                <li>Session cookie gate — no page renders unauthenticated</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>You log in on the real domain from your phone and see a shell that says "Connected" — sourced from an actual database query, not a hardcoded string.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s1">
+      <div class="slice-num">1</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Pipeline capture &amp; board</div>
+              <div class="slice-goal">The lead-to-lease board becomes real: properties and owners persist in Postgres instead of one browser's <code>localStorage</code>.</div>
+            </div>
+            <span class="badge badge-ready">Prototype UI ready</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li><code>properties</code> — name, address, gps, type_category, type_sub, specs jsonb, features text[], pipeline_status, target_clients text[]</li>
+                <li><code>owners</code> — first_name, last_name, company bool, company_name, mobile, email, address, notes</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>GET/POST /api/properties</code></li>
+                <li><code>PATCH /api/properties/:id/status</code></li>
+                <li><code>GET/POST /api/owners</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>Pipeline board, Add Property modal, Add Owner modal — ported from <em>Upkeep Property Pipeline</em>, <code>fetch()</code> in place of <code>localStorage</code></li>
+                <li>The owner-mode toggle fix carries over as-is</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>You add a property from your phone, and it's on the board when you open the same link from a laptop.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s2">
+      <div class="slice-num">2</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Activity &amp; visits</div>
+              <div class="slice-goal">Property detail stops showing seed data — the timeline and visit log are real, per property.</div>
+            </div>
+            <span class="badge badge-ready">Prototype UI ready</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li><code>activity_log</code> — property_id fk, type, text, next_action, follow_up_date, by, at</li>
+                <li><code>visits</code> — property_id fk, date, type, status, attendees, client</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>GET/POST /api/properties/:id/activity</code></li>
+                <li><code>GET/POST /api/properties/:id/visits</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>Overview / Activity / Visits tabs wired to live data</li>
+                <li>Pipeline status dropdown writes through to Slice 1's <code>PATCH</code> endpoint</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>A site visit logged today is still there — with the right date and attendee count — after a full page reload.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s3">
+      <div class="slice-num">3</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Real photo storage</div>
+              <div class="slice-goal">Property photos move out of base64-in-JSON and onto disk, so five photos per property doesn't mean five bloated database rows.</div>
+            </div>
+            <span class="badge badge-new">Net-new backend</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li>MinIO container (or bind-mounted volume) added to the compose file</li>
+                <li><code>property_photos</code> — property_id fk, storage_key, position</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>POST /api/properties/:id/photos</code> — multipart, streamed to storage</li>
+                <li><code>DELETE /api/properties/:id/photos/:photoId</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>Same 5-photo upload UI, swapped from <code>FileReader.readAsDataURL</code> to a real multipart request with a progress state</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>You upload 5 photos from your phone at a site visit, then see the same 5 from a laptop across town.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice milestone" id="s4">
+      <div class="slice-num">4</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Units &amp; leases</div>
+              <div class="slice-goal">A won pipeline property becomes an Active property with real units and a real lease — landlord cost and client rental stop being form fields and become an actual record.</div>
+            </div>
+            <span class="badge badge-ready">Prototype UI ready</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li><code>units</code> — property_id fk, label, type, beds, baths, status, rental_price</li>
+                <li><code>leases</code> — unit_id fk, landlord_cost, client_rental, deposit, start_date, end_date</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>POST /api/properties/:id/activate</code> — flips stage, opens a lease shell</li>
+                <li><code>GET/POST /api/properties/:id/units</code></li>
+                <li><code>PATCH /api/leases/:id</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>"Move to Active" action, Units tab — ported from <em>Upkeep Pipeline</em></li>
+                <li>Financials panel reads gross margin from the real lease row, not <code>property.financials</code></li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>A leased property shows correct gross margin computed from a real lease record, and its units list survives a reload.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s5">
+      <div class="slice-num">5</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Tenant accounts</div>
+              <div class="slice-goal">Tenants are people with logins, not a dropdown you switch between — the portal is scoped to whoever's actually signed in.</div>
+            </div>
+            <span class="badge badge-new">Net-new auth</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li><code>tenants</code> — unit_id fk, name, phone, email, password_hash</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li>Second session-cookie flow, scoped role: a tenant session can only read its own unit</li>
+                <li><code>GET /api/me</code> — returns unit + lease for the signed-in tenant</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>Tenant Portal view wired to a real login screen instead of the role-switcher</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>A seeded tenant logs in on their own phone and can see only their own unit — never another tenant's.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice milestone" id="s6">
+      <div class="slice-num">6</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Maintenance tickets</div>
+              <div class="slice-goal">The core of the product: tenants submit, you triage, status moves New → Acknowledged → Scheduled → In Progress → Pending Verification → Closed on real data.</div>
+            </div>
+            <span class="badge badge-ready">Prototype UI ready</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li><code>tickets</code> — unit_id, tenant_id, category, title, description, priority, status, assigned_to, est_cost</li>
+                <li><code>ticket_history</code>, <code>ticket_notes</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>POST /api/tickets</code> (tenant), <code>GET /api/tickets</code> (PM, filtered)</li>
+                <li><code>PATCH /api/tickets/:id</code> — acknowledge / cancel / close / reopen</li>
+                <li><code>POST /api/tickets/:id/notes</code></li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>Tickets board, drawer, and both New Request forms (tenant + PM-on-behalf-of) — ported straight from <em>Upkeep Pipeline</em></li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>A tenant submits a real request from their portal login and you see it on the board with a manual refresh.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s7">
+      <div class="slice-num">7</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Maintenance team</div>
+              <div class="slice-goal">Field staff get their own login and a queue scoped to what's assigned to them.</div>
+            </div>
+            <span class="badge badge-new">Net-new auth</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li><code>staff</code> — name, trade, password_hash</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>PATCH /api/tickets/:id/assign</code></li>
+                <li><code>PATCH /api/tickets/:id</code> — start / complete, scoped to the assigned staff session</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>My Queue view wired to a real staff login, third session role</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>You assign a ticket to a real staff account, and they see it, start it, and complete it from their own phone.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s8">
+      <div class="slice-num">8</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Live updates</div>
+              <div class="slice-goal">Replace "reload to see it" with a near-real-time nudge — no separate realtime database service, per the self-hosted stack decision.</div>
+            </div>
+            <span class="badge badge-new">Net-new</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul>
+                <li>None — this slice is transport, not storage</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul>
+                <li><code>GET /api/events</code> — Hono SSE stream, or a short-interval polling endpoint per role</li>
+              </ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul>
+                <li>Toast/badge on a new emergency ticket for PM; status-change toast for the tenant who filed it</li>
+              </ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>Two open tabs — one PM, one tenant — both show a status change within a few seconds, no manual reload.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s9">
+      <div class="slice-num">9</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Portfolio reporting</div>
+              <div class="slice-goal">Turn the margin already captured per lease into one honest number across the whole portfolio.</div>
+            </div>
+            <span class="badge badge-new">Net-new</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul><li>None — reads existing <code>leases</code></li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul><li><code>GET /api/reports/portfolio</code> — sums landlord cost, client rental, margin across active leases</li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul><li>One reporting panel — total monthly margin, nothing fancier yet</li></ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>The total on screen matches a manual add-up of every active lease's margin.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s10">
+      <div class="slice-num">10</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Documents</div>
+              <div class="slice-goal">Signed leases, IDs, and other paperwork attach to the record they belong to, reusing the storage from Slice 3.</div>
+            </div>
+            <span class="badge badge-new">Net-new</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul><li><code>documents</code> — owner_type, owner_id, filename, storage_key, uploaded_by, uploaded_at</li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul><li><code>POST/GET /api/documents</code>, scoped by owner_type + owner_id</li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul><li>Documents tab on property and lease detail</li></ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>You attach a signed lease PDF to a lease record today, and can pull it up next month.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice" id="s11">
+      <div class="slice-num">11</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Utility accounts</div>
+              <div class="slice-goal">GPL, GWI, and other utility accounts become tracked records against a property instead of a note somewhere.</div>
+            </div>
+            <span class="badge badge-new">Net-new</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul><li><code>utility_accounts</code> — property_id fk, provider, account_number, type, notes</li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul><li><code>GET/POST /api/properties/:id/utilities</code></li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul><li>Simple list on property detail, no new tab needed</li></ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>Every active property's GPL and GWI account numbers are on its detail page, not in a notebook.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slice milestone" id="s12">
+      <div class="slice-num">12</div>
+      <div class="slice-card">
+        <div class="slice-head">
+          <div class="slice-head-top">
+            <div>
+              <div class="slice-title">Backups &amp; hardening</div>
+              <div class="slice-goal">Make it trustworthy enough to actually run the business on — this one doesn't end, it starts here and keeps going.</div>
+            </div>
+            <span class="badge badge-new">Ops</span>
+          </div>
+        </div>
+        <div class="slice-body">
+          <div class="facet-grid">
+            <div class="facet">
+              <div class="facet-label">Data</div>
+              <ul><li>Nightly <code>pg_dump</code> to a separate volume, off-box copy if possible</li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Interface</div>
+              <ul><li>Structured request logs; a simple alert on repeated 5xx responses</li></ul>
+            </div>
+            <div class="facet">
+              <div class="facet-label">Experience</div>
+              <ul><li>A handful of smoke tests on the ticket workflow and pipeline board, run before each deploy</li></ul>
+            </div>
+          </div>
+          <div class="dod"><span class="dod-mark">✓</span><div><b>Ships when</b>You've done one real restore-from-backup rehearsal and been back up inside an hour.</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>How to sequence this</h2>
+    <div class="note-row">
+      <div class="note-tag">Non-negotiable</div>
+      <div class="note-text"><strong>Slice 0 always goes first.</strong> Nothing else is worth building until login, one endpoint, and one page are proven on the real domain.</div>
+    </div>
+    <div class="note-row">
+      <div class="note-tag">Fastest wins</div>
+      <div class="note-text"><strong>Slices 1–3</strong> move quickest — the UI already exists in <em>Upkeep Property Pipeline</em>, so most of the work is backend wiring, not new screens.</div>
+    </div>
+    <div class="note-row">
+      <div class="note-tag">The backbone</div>
+      <div class="note-text"><strong>Slices 4–7</strong> are where the real net-new work is: units, leases, tenant accounts, and the maintenance workflow don't exist as data anywhere yet. Slice 6 is the actual product — everything before it exists to support tickets getting logged and closed.</div>
+    </div>
+    <div class="note-row">
+      <div class="note-tag">Reorderable</div>
+      <div class="note-text"><strong>Slices 9–11</strong> can move around, or wait, based on what the business actually needs first — none of them block anything downstream.</div>
+    </div>
+    <div class="note-row">
+      <div class="note-tag">Ongoing</div>
+      <div class="note-text"><strong>Slice 12</strong> isn't a one-time build — start the backup job as soon as Slice 1 has real data worth losing, and keep tightening it as the system grows.</div>
+    </div>
+  </div>
+
+  <footer class="page-foot">Upkeep — built for a Guyana-based property sourcing &amp; leasing operation. Self-hosted on the existing VPS, no third-party BaaS.</footer>
+
+</div>
