@@ -1,10 +1,18 @@
 import type { Context, Next } from 'hono';
 import { getSessionUser } from './session.js';
+import type { schema } from '../db/client.js';
+
+export type AuthedVariables = {
+  user: typeof schema.users.$inferSelect;
+};
+
+type AuthedContext = Context<{ Variables: AuthedVariables }>;
 
 // Attaches the signed-in user to c.var.user, or rejects with 401.
 // Nothing renders in the web app without passing through this first —
-// that's the whole point of Slice 0.
-export async function requireAuth(c: Context, next: Next) {
+// that's the whole point of Slice 0, and every route added since keeps
+// relying on it.
+export async function requireAuth(c: AuthedContext, next: Next) {
   const user = await getSessionUser(c);
   if (!user) {
     return c.json({ error: 'Not signed in.' }, 401);

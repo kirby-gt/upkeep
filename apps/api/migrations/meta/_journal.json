@@ -8,6 +8,13 @@
       "when": 1788982074008,
       "tag": "0000_blue_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788985039059,
+      "tag": "0001_normal_sentry",
+      "breakpoints": true
     }
   ]
 }

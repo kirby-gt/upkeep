@@ -2,13 +2,9 @@ import { Hono } from 'hono';
 import { sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { requireAuth } from '../auth/middleware.js';
-import type { schema } from '../db/client.js';
+import type { AuthedVariables } from '../auth/middleware.js';
 
-type Variables = {
-  user: typeof schema.users.$inferSelect;
-};
-
-export const meRoute = new Hono<{ Variables: Variables }>();
+export const meRoute = new Hono<{ Variables: AuthedVariables }>();
 
 // Protected — this is the "prove it's really connected" endpoint the
 // dashboard shell calls after login. It round-trips a real query so the
