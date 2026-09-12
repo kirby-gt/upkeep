@@ -3,9 +3,11 @@ import { login, logout, fetchMe, fetchProperties, fetchOwners, type Me } from '.
 import type { Owner, Property } from './types.js';
 import PipelineBoard from './components/PipelineBoard.js';
 import OwnersList from './components/OwnersList.js';
+import OwnerDetail from './components/OwnerDetail.js';
 import PropertyDetail from './components/PropertyDetail.js';
 import AddPropertyModal from './components/AddPropertyModal.js';
 import AddOwnerModal from './components/AddOwnerModal.js';
+import { ownerDisplayName } from './lib/format.js';
 
 type AuthStatus = 'checking' | 'signed-out' | 'signed-in';
 type View = 'board' | 'owners' | 'property';
@@ -112,6 +114,8 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [returnView, setReturnView] = useState<View>('board');
   const [modal, setModal] = useState<Modal>(null);
 
   async function refresh() {
@@ -127,10 +131,16 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
 
   const ownerById = new Map(owners.map((o) => [o.id, o]));
   const selectedProperty = selectedPropertyId ? properties.find((p) => p.id === selectedPropertyId) ?? null : null;
+  const selectedOwner = selectedOwnerId ? ownerById.get(selectedOwnerId) ?? null : null;
 
   function openProperty(id: string) {
+    setReturnView(view);
     setSelectedPropertyId(id);
     setView('property');
+  }
+
+  function openOwner(id: string) {
+    setSelectedOwnerId(id);
   }
 
   function handlePropertyStatusChanged(updated: Property) {
@@ -156,6 +166,7 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               onClick={() => {
                 setView('board');
                 setSelectedPropertyId(null);
+                setSelectedOwnerId(null);
               }}
             >
               Pipeline board
@@ -166,6 +177,7 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               onClick={() => {
                 setView('owners');
                 setSelectedPropertyId(null);
+                setSelectedOwnerId(null);
               }}
             >
               Owners
@@ -193,16 +205,18 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               {view === 'property' && selectedProperty
                 ? selectedProperty.name
                 : view === 'owners'
-                  ? 'Owners'
+                  ? selectedOwner
+                    ? ownerDisplayName(selectedOwner)
+                    : 'Owners'
                   : 'Pipeline board'}
             </h1>
             <div className="sub">
               {view === 'board' && 'Track every lead from first contact to lease.'}
-              {view === 'owners' && 'Landlords, agents, and companies you work with.'}
+              {view === 'owners' && (selectedOwner ? 'Owner detail' : 'Landlords, agents, and companies you work with.')}
               {view === 'property' && 'Property detail'}
             </div>
           </div>
-          {view !== 'property' && (
+          {view !== 'property' && !selectedOwner && (
             <div className="topbar-actions">
               <button className="btn" onClick={() => setModal('add-owner')}>
                 + Add Owner
@@ -220,15 +234,25 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           ) : view === 'board' ? (
             <PipelineBoard properties={properties} owners={owners} onOpenProperty={openProperty} />
           ) : view === 'owners' ? (
-            <OwnersList owners={owners} properties={properties} />
+            selectedOwner ? (
+              <OwnerDetail
+                owner={selectedOwner}
+                properties={properties.filter((p) => p.ownerId === selectedOwner.id)}
+                onBack={() => setSelectedOwnerId(null)}
+                onOpenProperty={openProperty}
+              />
+            ) : (
+              <OwnersList owners={owners} properties={properties} onOpenOwner={openOwner} />
+            )
           ) : selectedProperty ? (
             <PropertyDetail
               property={selectedProperty}
               owner={selectedProperty.ownerId ? ownerById.get(selectedProperty.ownerId) : null}
               onBack={() => {
-                setView('board');
+                setView(returnView);
                 setSelectedPropertyId(null);
               }}
+              backLabel={returnView === 'owners' ? 'Back to owner' : 'Back to pipeline'}
               onStatusChanged={handlePropertyStatusChanged}
             />
           ) : (

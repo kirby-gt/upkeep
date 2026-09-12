@@ -1,7 +1,15 @@
 import type { Owner, Property } from '../types.js';
 import { ownerDisplayName } from '../lib/format.js';
 
-export default function OwnersList({ owners, properties }: { owners: Owner[]; properties: Property[] }) {
+export default function OwnersList({
+  owners,
+  properties,
+  onOpenOwner,
+}: {
+  owners: Owner[];
+  properties: Property[];
+  onOpenOwner: (id: string) => void;
+}) {
   if (owners.length === 0) {
     return (
       <div className="empty-note">
@@ -15,7 +23,7 @@ export default function OwnersList({ owners, properties }: { owners: Owner[]; pr
       {owners.map((owner) => {
         const count = properties.filter((p) => p.ownerId === owner.id).length;
         return (
-          <div className="owner-card" key={owner.id}>
+          <div className="owner-card" key={owner.id} onClick={() => onOpenOwner(owner.id)} role="button" tabIndex={0}>
             <div>
               <div className="oc-name">{ownerDisplayName(owner)}</div>
               <div className="oc-meta">

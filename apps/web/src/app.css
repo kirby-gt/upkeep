@@ -750,6 +750,10 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+}
+.owner-card:hover {
+  border-color: var(--ink-soft);
 }
 .owner-card .oc-name {
   font-weight: 600;

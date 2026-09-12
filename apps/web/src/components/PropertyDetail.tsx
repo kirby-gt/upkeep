@@ -20,11 +20,13 @@ export default function PropertyDetail({
   property,
   owner,
   onBack,
+  backLabel = 'Back to pipeline',
   onStatusChanged,
 }: {
   property: Property;
   owner: Owner | null | undefined;
   onBack: () => void;
+  backLabel?: string;
   onStatusChanged: (updated: Property) => void;
 }) {
   const [tab, setTab] = useState<Tab>('overview');
@@ -81,7 +83,7 @@ export default function PropertyDetail({
   return (
     <div>
       <button className="detail-back" onClick={onBack}>
-        ← Back to pipeline
+        ← {backLabel}
       </button>
       <div className="topbar" style={{ padding: '10px 0', position: 'static', border: 'none' }}>
         <div>
