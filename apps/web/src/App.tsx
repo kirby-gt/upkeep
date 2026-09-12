@@ -100,10 +100,7 @@ function LoginScreen({ onSignedIn }: { onSignedIn: () => void }) {
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-        <p className="login-hint">
-          Seeded login: <code>steve@upkeep.local</code> / <code>upkeep-dev</code> (or whatever you set with{' '}
-          <code>SEED_PM_EMAIL</code> / <code>SEED_PM_PASSWORD</code>).
-        </p>
+
       </div>
     </div>
   );

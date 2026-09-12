@@ -1,0 +1,65 @@
+# Production stack for the VPS. Runs behind the shared Traefik already on that
+# box (network_mode: host, Docker-label provider, letsencrypt HTTP-01 resolver,
+# global HTTP->HTTPS redirect). No host ports are published: Traefik is the
+# only public entry point and reaches these containers directly over the
+# bridge network this project gets.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Requires a .env next to this file with SESSION_SECRET and DB_PASSWORD set.
+# See DEPLOY.md for the full runbook (first deploy, migrations, redeploys,
+# backups).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: upkeep
+      POSTGRES_USER: upkeep
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://upkeep:${DB_PASSWORD:?set DB_PASSWORD in .env}@db:5432/upkeep
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      NODE_ENV: production
+      PORT: 8787
+    volumes:
+      # Property photos live on disk (apps/api/src/routes/photos.ts) — a
+      # named volume so they survive `up -d --build` on every redeploy.
+      - photos_data:/app/apps/api/data/photos
+    depends_on:
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.upkeep-api.rule=Host(`upkeep.glassgroup.co`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.upkeep-api.entrypoints=websecure"
+      - "traefik.http.routers.upkeep-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.upkeep-api.priority=100"
+      - "traefik.http.services.upkeep-api.loadbalancer.server.port=8787"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.upkeep-web.rule=Host(`upkeep.glassgroup.co`)"
+      - "traefik.http.routers.upkeep-web.entrypoints=websecure"
+      - "traefik.http.routers.upkeep-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.upkeep-web.priority=1"
+      - "traefik.http.services.upkeep-web.loadbalancer.server.port=80"
+
+volumes:
+  db_data:
+  photos_data:
