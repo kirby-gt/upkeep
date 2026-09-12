@@ -90,4 +90,5 @@ export type NewOwnerInput = {
   mobile: string;
   email: string;
   address: string;
+  notes: string;
 };

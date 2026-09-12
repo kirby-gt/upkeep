@@ -23,12 +23,14 @@ export default function PropertyDetail({
   onBack,
   backLabel = 'Back to pipeline',
   onStatusChanged,
+  onEdit,
 }: {
   property: Property;
   owner: Owner | null | undefined;
   onBack: () => void;
   backLabel?: string;
   onStatusChanged: (updated: Property) => void;
+  onEdit: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('overview');
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
@@ -92,6 +94,9 @@ export default function PropertyDetail({
           <div className="sub">{location || '—'}</div>
         </div>
         <div className="topbar-actions">
+          <button className="btn btn-sm" onClick={onEdit}>
+            Edit
+          </button>
           <select className="chip-select" value={statusDraft} onChange={(e) => setStatusDraft(e.target.value)}>
             {PIPELINE_STATUS_ORDER.map((s) => (
               <option key={s} value={s}>

@@ -65,6 +65,13 @@ export function updatePropertyStatus(id: string, pipelineStatus: string) {
   });
 }
 
+export function updateProperty(id: string, input: Partial<NewPropertyInput>) {
+  return request<Property>(`/properties/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
 // ---------- Owners ----------
 
 export function fetchOwners() {
@@ -74,6 +81,13 @@ export function fetchOwners() {
 export function createOwner(input: NewOwnerInput) {
   return request<Owner>('/owners', {
     method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateOwner(id: string, input: NewOwnerInput) {
+  return request<Owner>(`/owners/${id}`, {
+    method: 'PATCH',
     body: JSON.stringify(input),
   });
 }

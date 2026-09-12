@@ -11,7 +11,7 @@ import { ownerDisplayName } from './lib/format.js';
 
 type AuthStatus = 'checking' | 'signed-out' | 'signed-in';
 type View = 'board' | 'owners' | 'property';
-type Modal = 'add-property' | 'add-owner' | null;
+type Modal = 'add-property' | 'add-owner' | 'edit-property' | 'edit-owner' | null;
 
 export default function App() {
   const [status, setStatus] = useState<AuthStatus>('checking');
@@ -143,8 +143,12 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
     setSelectedOwnerId(id);
   }
 
-  function handlePropertyStatusChanged(updated: Property) {
+  function handlePropertyUpdated(updated: Property) {
     setProperties((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  }
+
+  function handleOwnerUpdated(updated: Owner) {
+    setOwners((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
   }
 
   return (
@@ -240,6 +244,7 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                 properties={properties.filter((p) => p.ownerId === selectedOwner.id)}
                 onBack={() => setSelectedOwnerId(null)}
                 onOpenProperty={openProperty}
+                onEdit={() => setModal('edit-owner')}
               />
             ) : (
               <OwnersList owners={owners} properties={properties} onOpenOwner={openOwner} />
@@ -253,7 +258,8 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                 setSelectedPropertyId(null);
               }}
               backLabel={returnView === 'owners' ? 'Back to owner' : 'Back to pipeline'}
-              onStatusChanged={handlePropertyStatusChanged}
+              onStatusChanged={handlePropertyUpdated}
+              onEdit={() => setModal('edit-property')}
             />
           ) : (
             <p style={{ color: 'var(--ink-soft)' }}>Property not found.</p>
@@ -277,6 +283,28 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           onClose={() => setModal(null)}
           onCreated={(owner) => {
             setOwners((prev) => [owner, ...prev]);
+            setModal(null);
+          }}
+        />
+      )}
+      {modal === 'edit-property' && selectedProperty && (
+        <AddPropertyModal
+          owners={owners}
+          property={selectedProperty}
+          onClose={() => setModal(null)}
+          onOwnerCreated={(owner) => setOwners((prev) => [owner, ...prev])}
+          onUpdated={(updated) => {
+            handlePropertyUpdated(updated);
+            setModal(null);
+          }}
+        />
+      )}
+      {modal === 'edit-owner' && selectedOwner && (
+        <AddOwnerModal
+          owner={selectedOwner}
+          onClose={() => setModal(null)}
+          onUpdated={(updated) => {
+            handleOwnerUpdated(updated);
             setModal(null);
           }}
         />

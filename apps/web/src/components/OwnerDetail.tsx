@@ -7,11 +7,13 @@ export default function OwnerDetail({
   properties,
   onBack,
   onOpenProperty,
+  onEdit,
 }: {
   owner: Owner;
   properties: Property[];
   onBack: () => void;
   onOpenProperty: (id: string) => void;
+  onEdit: () => void;
 }) {
   return (
     <div>
@@ -25,6 +27,11 @@ export default function OwnerDetail({
             {owner.mobile}
             {owner.email ? ` · ${owner.email}` : ''}
           </div>
+        </div>
+        <div className="topbar-actions">
+          <button className="btn btn-sm" onClick={onEdit}>
+            Edit
+          </button>
         </div>
       </div>
 

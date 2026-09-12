@@ -105,6 +105,71 @@ propertiesRoute.post('/properties', async (c) => {
   return c.json(row, 201);
 });
 
+propertiesRoute.patch('/properties/:id', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => null);
+  if (!body || typeof body.name !== 'string' || !body.name.trim()) {
+    return c.json({ error: 'Property name is required.' }, 400);
+  }
+  if (typeof body.line1 !== 'string' || !body.line1.trim()) {
+    return c.json({ error: 'Address line 1 is required.' }, 400);
+  }
+  if (typeof body.contactName !== 'string' || !body.contactName.trim()) {
+    return c.json({ error: 'A property contact name is required.' }, 400);
+  }
+  if (typeof body.contactMobile !== 'string' || !body.contactMobile.trim()) {
+    return c.json({ error: 'A property contact mobile number is required.' }, 400);
+  }
+
+  const [existing] = await db
+    .select({ ownerId: schema.properties.ownerId })
+    .from(schema.properties)
+    .where(eq(schema.properties.id, id))
+    .limit(1);
+  if (!existing) return c.json({ error: 'Property not found.' }, 404);
+
+  const newOwnerId: string | null = body.ownerId || null;
+
+  const [row] = await db
+    .update(schema.properties)
+    .set({
+      name: body.name.trim(),
+      line1: body.line1.trim(),
+      line2: body.line2 ?? '',
+      city: body.city ?? '',
+      village: body.village ?? '',
+      region: body.region ?? '',
+      gps: body.gps ?? '',
+      typeCategory: body.typeCategory ?? 'Residential',
+      typeSub: body.typeSub ?? '',
+      specs: body.specs ?? {},
+      features: Array.isArray(body.features) ? body.features : [],
+      contactName: body.contactName.trim(),
+      contactMobile: body.contactMobile.trim(),
+      contactHome: body.contactHome ?? '',
+      contactOffice: body.contactOffice ?? '',
+      contactEmail: body.contactEmail ?? '',
+      contactRole: body.contactRole ?? 'Owner',
+      ownerId: newOwnerId,
+      targetClients: Array.isArray(body.targetClients) ? body.targetClients : [],
+      landlordCost: body.landlordCost != null ? String(body.landlordCost) : null,
+    })
+    .where(eq(schema.properties.id, id))
+    .returning();
+
+  if (newOwnerId !== existing.ownerId) {
+    let text = 'Owner unassigned.';
+    if (newOwnerId) {
+      const [owner] = await db.select().from(schema.owners).where(eq(schema.owners.id, newOwnerId)).limit(1);
+      const ownerName = owner ? (owner.company ? owner.companyName : `${owner.firstName} ${owner.lastName}`.trim()) || 'owner' : 'owner';
+      text = existing.ownerId ? `Owner changed to ${ownerName}.` : `Owner set to ${ownerName}.`;
+    }
+    await db.insert(schema.activityLog).values({ propertyId: id, type: 'Note', text, by: c.get('user').email });
+  }
+
+  return c.json(row);
+});
+
 propertiesRoute.patch('/properties/:id/status', async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json().catch(() => null);

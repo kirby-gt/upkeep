@@ -7,7 +7,7 @@ import {
   TARGET_CLIENT_PRESETS,
 } from '../constants.js';
 import type { NewOwnerInput, Owner, Property, PropertySpecs } from '../types.js';
-import { createOwner, createProperty, uploadPhotos, type NewPropertyInput } from '../api.js';
+import { createOwner, createProperty, updateProperty, uploadPhotos, type NewPropertyInput } from '../api.js';
 import { ownerDisplayName } from '../lib/format.js';
 
 type OwnerMode = 'search' | 'create';
@@ -29,6 +29,7 @@ const EMPTY_NEW_OWNER: NewOwnerInput = {
   mobile: '',
   email: '',
   address: '',
+  notes: '',
 };
 
 type PropertyForm = {
@@ -71,20 +72,47 @@ const EMPTY_PROPERTY: PropertyForm = {
   landlordCost: '',
 };
 
+function formFromProperty(p: Property): PropertyForm {
+  return {
+    name: p.name,
+    line1: p.line1,
+    line2: p.line2,
+    city: p.city,
+    village: p.village,
+    region: p.region,
+    gps: p.gps,
+    typeCategory: p.typeCategory,
+    typeSub: p.typeSub,
+    specs: { ...EMPTY_SPECS, ...p.specs },
+    contactName: p.contactName,
+    contactMobile: p.contactMobile,
+    contactHome: p.contactHome,
+    contactOffice: p.contactOffice,
+    contactEmail: p.contactEmail,
+    contactRole: p.contactRole,
+    landlordCost: p.landlordCost ?? '',
+  };
+}
+
 export default function AddPropertyModal({
   owners,
+  property,
   onClose,
   onCreated,
+  onUpdated,
   onOwnerCreated,
 }: {
   owners: Owner[];
+  property?: Property;
   onClose: () => void;
-  onCreated: (property: Property) => void;
+  onCreated?: (property: Property) => void;
+  onUpdated?: (property: Property) => void;
   onOwnerCreated: (owner: Owner) => void;
 }) {
-  const [form, setForm] = useState<PropertyForm>(EMPTY_PROPERTY);
-  const [features, setFeatures] = useState<string[]>([]);
-  const [targetClients, setTargetClients] = useState<string[]>([]);
+  const isEdit = Boolean(property);
+  const [form, setForm] = useState<PropertyForm>(property ? formFromProperty(property) : EMPTY_PROPERTY);
+  const [features, setFeatures] = useState<string[]>(property?.features ?? []);
+  const [targetClients, setTargetClients] = useState<string[]>(property?.targetClients ?? []);
   const [customTarget, setCustomTarget] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
 
@@ -93,13 +121,15 @@ export default function AddPropertyModal({
   // "form resets on toggle" bug, and it doesn't get to come back here.
   const [ownerMode, setOwnerMode] = useState<OwnerMode>('search');
   const [ownerQuery, setOwnerQuery] = useState('');
-  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(property?.ownerId ?? null);
   const [newOwner, setNewOwner] = useState<NewOwnerInput>(EMPTY_NEW_OWNER);
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const subTypes = PROPERTY_TYPES[form.typeCategory] ?? [];
+
+  const selectedOwner = owners.find((o) => o.id === selectedOwnerId) ?? null;
 
   const filteredOwners = useMemo(() => {
     const q = ownerQuery.trim().toLowerCase();
@@ -191,13 +221,16 @@ export default function AddPropertyModal({
         landlordCost: form.landlordCost || null,
       };
 
-      const property = await createProperty(input);
-
-      if (photos.length > 0) {
-        await uploadPhotos(property.id, photos);
+      if (isEdit && property) {
+        const updated = await updateProperty(property.id, input);
+        onUpdated?.(updated);
+      } else {
+        const created = await createProperty(input);
+        if (photos.length > 0) {
+          await uploadPhotos(created.id, photos);
+        }
+        onCreated?.(created);
       }
-
-      onCreated(property);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -208,8 +241,10 @@ export default function AddPropertyModal({
   return (
     <div className="modal-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal modal-lg">
-        <h2>Add Property to Pipeline</h2>
-        <p className="modal-sub">Capture a lead property — you can fill in the rest as the deal progresses.</p>
+        <h2>{isEdit ? 'Edit Property' : 'Add Property to Pipeline'}</h2>
+        <p className="modal-sub">
+          {isEdit ? 'Update this property’s details.' : 'Capture a lead property — you can fill in the rest as the deal progresses.'}
+        </p>
         <form onSubmit={handleSubmit}>
           <div className="section-title">Property</div>
           <div className="field">
@@ -325,34 +360,36 @@ export default function AddPropertyModal({
             </div>
           </div>
 
-          <div className="field">
-            <label>Photos ({photos.length}/5)</label>
-            <div className="file-row">
-              <label className="file-btn">
-                Choose files…
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: 'none' }}
-                  disabled={photos.length >= 5}
-                  onChange={(e) => {
-                    handleFiles(e.target.files);
-                    e.target.value = '';
-                  }}
-                />
-              </label>
-              {photos.map((file, i) => (
-                <div className="photo-thumb-wrap" key={i}>
-                  <img className="photo-thumb" src={URL.createObjectURL(file)} alt={file.name} />
-                  <button type="button" className="photo-thumb-remove" onClick={() => removePhoto(i)}>
-                    ×
-                  </button>
-                </div>
-              ))}
+          {!isEdit && (
+            <div className="field">
+              <label>Photos ({photos.length}/5)</label>
+              <div className="file-row">
+                <label className="file-btn">
+                  Choose files…
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style={{ display: 'none' }}
+                    disabled={photos.length >= 5}
+                    onChange={(e) => {
+                      handleFiles(e.target.files);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {photos.map((file, i) => (
+                  <div className="photo-thumb-wrap" key={i}>
+                    <img className="photo-thumb" src={URL.createObjectURL(file)} alt={file.name} />
+                    <button type="button" className="photo-thumb-remove" onClick={() => removePhoto(i)}>
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <span className="field-hint">Up to 5 photos, JPG/PNG/WEBP/GIF, 8MB max each.</span>
             </div>
-            <span className="field-hint">Up to 5 photos, JPG/PNG/WEBP/GIF, 8MB max each.</span>
-          </div>
+          )}
 
           <div className="section-title">Property contact</div>
           <div className="form-cols">
@@ -423,7 +460,20 @@ export default function AddPropertyModal({
                   </div>
                 ))}
               </div>
-              {selectedOwnerId && <span className="field-hint">Owner selected — will be linked to this property.</span>}
+              {selectedOwner ? (
+                <span className="field-hint">
+                  {ownerDisplayName(selectedOwner)} will be linked to this property. —{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOwnerId(null)}
+                    style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}
+                  >
+                    Remove
+                  </button>
+                </span>
+              ) : (
+                isEdit && <span className="field-hint">No owner linked — search above to connect one.</span>
+              )}
             </div>
           ) : (
             <div className="subfieldset">
@@ -526,7 +576,7 @@ export default function AddPropertyModal({
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add to Pipeline'}
+              {submitting ? (isEdit ? 'Saving…' : 'Adding…') : isEdit ? 'Save Changes' : 'Add to Pipeline'}
             </button>
           </div>
         </form>
