@@ -405,6 +405,11 @@ export default function AddPropertyModal({
                 placeholder="Search owners by name…"
                 value={ownerQuery}
                 onChange={(e) => setOwnerQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return;
+                  e.preventDefault();
+                  if (filteredOwners.length > 0) setSelectedOwnerId(filteredOwners[0].id);
+                }}
               />
               <div className="owner-search-list">
                 {filteredOwners.length === 0 && <div className="owner-search-item">No owners match.</div>}
