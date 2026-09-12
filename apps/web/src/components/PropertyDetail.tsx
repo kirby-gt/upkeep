@@ -13,6 +13,7 @@ import {
 } from '../api.js';
 import { ACTIVITY_TYPES, PIPELINE_STATUS, PIPELINE_STATUS_ORDER, VISIT_STATUSES, VISIT_TYPES } from '../constants.js';
 import { formatDate, formatDateTime, ownerDisplayName, statusColor } from '../lib/format.js';
+import PhotoLightbox from './PhotoLightbox.js';
 
 type Tab = 'overview' | 'activity' | 'visits';
 
@@ -139,6 +140,7 @@ function OverviewTab({
   onDeletePhoto: (id: string) => void;
 }) {
   const color = statusColor(property.pipelineStatus);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   return (
     <div className="detail-grid">
       <div>
@@ -216,15 +218,37 @@ function OverviewTab({
 
           <div className="section-title">Photos ({photos.length}/5)</div>
           <div className="photo-grid">
-            {photos.map((p) => (
-              <div className="photo-thumb-wrap" key={p.id}>
+            {photos.map((p, i) => (
+              <div
+                className="photo-thumb-wrap"
+                key={p.id}
+                onClick={() => setLightboxIndex(i)}
+                role="button"
+                tabIndex={0}
+              >
                 <img src={photoUrl(property.id, p.storageKey)} alt="" />
-                <button type="button" className="photo-thumb-remove" onClick={() => onDeletePhoto(p.id)}>
+                <button
+                  type="button"
+                  className="photo-thumb-remove"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeletePhoto(p.id);
+                  }}
+                >
                   ×
                 </button>
               </div>
             ))}
           </div>
+          {lightboxIndex !== null && (
+            <PhotoLightbox
+              photos={photos}
+              index={lightboxIndex}
+              propertyId={property.id}
+              onClose={() => setLightboxIndex(null)}
+              onIndexChange={setLightboxIndex}
+            />
+          )}
           {photos.length < 5 && (
             <label className="file-btn" style={{ display: 'inline-block', marginTop: 6 }}>
               Add photos…
