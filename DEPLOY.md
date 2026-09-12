@@ -47,13 +47,11 @@ changing it later needs `ALTER USER` inside the db container as well.
 
 ## First deploy
 
-```bash
-ssh root@2.25.85.86 'mkdir -p /docker/upkeep'
+The VPS clones straight from GitHub (public repo, no deploy key needed) —
+nothing is uploaded from the workstation.
 
-# From this project directory on the workstation (Git Bash):
-tar czf - --exclude=node_modules --exclude=dist --exclude='.env' \
-  --exclude='apps/api/data' --exclude='.git' . \
-| ssh root@2.25.85.86 'tar xzf - -C /docker/upkeep'
+```bash
+ssh root@2.25.85.86 'git clone https://github.com/kirby-gt/upkeep.git /docker/upkeep'
 
 ssh root@2.25.85.86 'cat > /docker/upkeep/.env <<EOF
 DB_PASSWORD='"$(openssl rand -hex 16)"'
@@ -97,18 +95,14 @@ staff/tenant accounts; until then this is the only door in.)
 
 ## Redeploy after code changes
 
-From this project directory on the workstation (Git Bash):
+Push to `main` on the workstation first, then on the VPS:
 
 ```bash
-tar czf - --exclude=node_modules --exclude=dist --exclude='.env' \
-  --exclude='apps/api/data' --exclude='.git' . \
-| ssh root@2.25.85.86 'tar xzf - -C /docker/upkeep'
-
-ssh root@2.25.85.86 'cd /docker/upkeep && \
+ssh root@2.25.85.86 'cd /docker/upkeep && git pull && \
   docker compose -f docker-compose.prod.yml up -d --build'
 ```
 
-The `.env` on the server is preserved (it's excluded from the upload). If the
+`.env` isn't tracked (git-ignored), so `git pull` never touches it. If the
 change included a new migration, apply it:
 
 ```bash
