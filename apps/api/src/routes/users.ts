@@ -100,3 +100,28 @@ usersRoute.delete('/users/:id', async (c) => {
   await db.delete(schema.users).where(eq(schema.users.id, id));
   return c.json({ ok: true });
 });
+
+usersRoute.post('/users/:id/reset-password', async (c) => {
+  const allowed = managedRoles(c);
+  if (!allowed) return c.json({ error: 'You do not have access to user management.' }, 403);
+
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => null);
+  const password = String(body?.password ?? '');
+  if (password.length < 8) {
+    return c.json({ error: 'Password must be at least 8 characters.' }, 400);
+  }
+
+  const [target] = await db.select({ role: schema.users.role }).from(schema.users).where(eq(schema.users.id, id)).limit(1);
+  if (!target) return c.json({ error: 'User not found.' }, 404);
+  if (!allowed.includes(target.role)) {
+    return c.json({ error: "You do not have permission to reset this user's password." }, 403);
+  }
+
+  await db.update(schema.users).set({ passwordHash: hashPassword(password) }).where(eq(schema.users.id, id));
+  // A password reset should also kill any session already open under the
+  // old password, the same way removing a user cascades its sessions.
+  await db.delete(schema.sessions).where(eq(schema.sessions.userId, id));
+
+  return c.json({ ok: true });
+});

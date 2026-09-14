@@ -9,12 +9,13 @@ import UsersList from './components/UsersList.js';
 import AddPropertyModal from './components/AddPropertyModal.js';
 import AddOwnerModal from './components/AddOwnerModal.js';
 import AddUserModal from './components/AddUserModal.js';
+import ResetPasswordModal from './components/ResetPasswordModal.js';
 import { ownerDisplayName } from './lib/format.js';
 import { CREATABLE_ROLES } from './constants.js';
 
 type AuthStatus = 'checking' | 'signed-out' | 'signed-in';
 type View = 'board' | 'owners' | 'users' | 'property';
-type Modal = 'add-property' | 'add-owner' | 'add-user' | 'edit-property' | 'edit-owner' | null;
+type Modal = 'add-property' | 'add-owner' | 'add-user' | 'edit-property' | 'edit-owner' | 'reset-password' | null;
 
 export default function App() {
   const [status, setStatus] = useState<AuthStatus>('checking');
@@ -121,6 +122,7 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [returnView, setReturnView] = useState<View>('board');
   const [modal, setModal] = useState<Modal>(null);
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [resetPasswordUser, setResetPasswordUser] = useState<AppUser | null>(null);
   const creatableRoles = CREATABLE_ROLES[me.role] ?? [];
   const canManageUsers = creatableRoles.length > 0;
 
@@ -290,7 +292,15 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               <OwnersList owners={owners} properties={properties} onOpenOwner={openOwner} />
             )
           ) : view === 'users' ? (
-            <UsersList users={users} currentEmail={me.email} onRemove={handleRemoveUser} />
+            <UsersList
+              users={users}
+              currentEmail={me.email}
+              onRemove={handleRemoveUser}
+              onResetPassword={(user) => {
+                setResetPasswordUser(user);
+                setModal('reset-password');
+              }}
+            />
           ) : selectedProperty ? (
             <PropertyDetail
               property={selectedProperty}
@@ -356,6 +366,15 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           creatableRoles={creatableRoles}
           onClose={() => setModal(null)}
           onCreated={(user) => setUsers((prev) => [user, ...prev])}
+        />
+      )}
+      {modal === 'reset-password' && resetPasswordUser && (
+        <ResetPasswordModal
+          user={resetPasswordUser}
+          onClose={() => {
+            setModal(null);
+            setResetPasswordUser(null);
+          }}
         />
       )}
     </div>

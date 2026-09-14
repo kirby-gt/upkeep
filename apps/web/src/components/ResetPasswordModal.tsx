@@ -1,36 +1,29 @@
 import { useState } from 'react';
-import type { AppUser, NewUserInput } from '../types.js';
-import { createUser } from '../api.js';
-import { USER_ROLES } from '../constants.js';
+import type { AppUser } from '../types.js';
+import { resetUserPassword } from '../api.js';
 import { generatePassword } from '../lib/password.js';
 
-export default function AddUserModal({
-  creatableRoles,
+export default function ResetPasswordModal({
+  user,
   onClose,
-  onCreated,
 }: {
-  creatableRoles: string[];
+  user: AppUser;
   onClose: () => void;
-  onCreated: (user: AppUser) => void;
 }) {
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState(generatePassword());
-  const [role, setRole] = useState(creatableRoles[0]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [createdUser, setCreatedUser] = useState<AppUser | null>(null);
+  const [done, setDone] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!email.trim() || !email.includes('@')) return setError('A valid email is required.');
     if (password.length < 8) return setError('Password must be at least 8 characters.');
 
     setSubmitting(true);
     try {
-      const input: NewUserInput = { email: email.trim().toLowerCase(), password, role };
-      const user = await createUser(input);
-      setCreatedUser(user);
+      await resetUserPassword(user.id, password);
+      setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -38,31 +31,24 @@ export default function AddUserModal({
     }
   }
 
-  if (createdUser) {
+  if (done) {
     return (
       <div className="modal-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
         <div className="modal">
-          <h2>User Added</h2>
-          <p className="modal-sub">Share these credentials with them now — the password won&rsquo;t be shown again.</p>
+          <h2>Password Reset</h2>
+          <p className="modal-sub">Share this with them now — it won&rsquo;t be shown again. They&rsquo;ve been signed out everywhere.</p>
           <div className="subfieldset">
             <div className="field">
               <label>Email</label>
-              <input type="text" value={createdUser.email} readOnly />
+              <input type="text" value={user.email} readOnly />
             </div>
             <div className="field">
-              <label>Password</label>
+              <label>New password</label>
               <input type="text" value={password} readOnly />
             </div>
           </div>
           <div className="modal-actions">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                onCreated(createdUser);
-                onClose();
-              }}
-            >
+            <button type="button" className="btn btn-primary" onClick={onClose}>
               Done
             </button>
           </div>
@@ -74,32 +60,20 @@ export default function AddUserModal({
   return (
     <div className="modal-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <h2>Add User</h2>
-        <p className="modal-sub">Create a login so someone can start using Upkeep.</p>
+        <h2>Reset Password</h2>
+        <p className="modal-sub">
+          Set a new password for <strong>{user.email}</strong>. This immediately invalidates their current session.
+        </p>
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="field">
-            <label>Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              {creatableRoles.map((value) => (
-                <option key={value} value={value}>
-                  {USER_ROLES[value] ?? value}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Temporary password</label>
+            <label>New password</label>
             <div className="file-row">
               <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} style={{ flex: 1 }} required />
               <button type="button" className="btn btn-sm" onClick={() => setPassword(generatePassword())}>
                 Generate
               </button>
             </div>
-            <span className="field-hint">At least 8 characters. Share it with them directly — there&rsquo;s no email delivery yet.</span>
+            <span className="field-hint">At least 8 characters.</span>
           </div>
 
           {error && <p className="modal-error">{error}</p>}
@@ -109,7 +83,7 @@ export default function AddUserModal({
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add User'}
+              {submitting ? 'Resetting…' : 'Reset Password'}
             </button>
           </div>
         </form>

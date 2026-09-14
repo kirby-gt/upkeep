@@ -6,10 +6,12 @@ export default function UsersList({
   users,
   currentEmail,
   onRemove,
+  onResetPassword,
 }: {
   users: AppUser[];
   currentEmail: string;
   onRemove: (id: string) => void;
+  onResetPassword: (user: AppUser) => void;
 }) {
   if (users.length === 0) {
     return (
@@ -38,15 +40,20 @@ export default function UsersList({
                 {USER_ROLES[user.role] ?? user.role} · Added {formatDate(user.createdAt)}
               </div>
             </div>
-            <button
-              type="button"
-              className="btn btn-sm btn-ghost"
-              onClick={() => onRemove(user.id)}
-              disabled={isSelf}
-              title={isSelf ? "You can't remove your own account." : 'Remove this user'}
-            >
-              Remove
-            </button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button type="button" className="btn btn-sm" onClick={() => onResetPassword(user)}>
+                Reset Password
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => onRemove(user.id)}
+                disabled={isSelf}
+                title={isSelf ? "You can't remove your own account." : 'Remove this user'}
+              >
+                Remove
+              </button>
+            </div>
           </div>
         );
       })}

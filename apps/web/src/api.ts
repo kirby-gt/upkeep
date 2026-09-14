@@ -55,6 +55,13 @@ export function deleteUser(id: string) {
   });
 }
 
+export function resetUserPassword(id: string, password: string) {
+  return request<{ ok: true }>(`/users/${id}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  });
+}
+
 // ---------- Properties ----------
 
 export function fetchProperties() {
