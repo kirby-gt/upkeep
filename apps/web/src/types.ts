@@ -82,6 +82,19 @@ export type Photo = {
   createdAt: string;
 };
 
+export type AppUser = {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: string;
+};
+
+export type NewUserInput = {
+  email: string;
+  password: string;
+  role: string;
+};
+
 export type NewOwnerInput = {
   firstName: string;
   lastName: string;

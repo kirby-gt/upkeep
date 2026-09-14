@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
-import { login, logout, fetchMe, fetchProperties, fetchOwners, type Me } from './api.js';
-import type { Owner, Property } from './types.js';
+import { login, logout, fetchMe, fetchProperties, fetchOwners, fetchUsers, deleteUser, type Me } from './api.js';
+import type { AppUser, Owner, Property } from './types.js';
 import PipelineBoard from './components/PipelineBoard.js';
 import OwnersList from './components/OwnersList.js';
 import OwnerDetail from './components/OwnerDetail.js';
 import PropertyDetail from './components/PropertyDetail.js';
+import UsersList from './components/UsersList.js';
 import AddPropertyModal from './components/AddPropertyModal.js';
 import AddOwnerModal from './components/AddOwnerModal.js';
+import AddUserModal from './components/AddUserModal.js';
 import { ownerDisplayName } from './lib/format.js';
 
 type AuthStatus = 'checking' | 'signed-out' | 'signed-in';
-type View = 'board' | 'owners' | 'property';
-type Modal = 'add-property' | 'add-owner' | 'edit-property' | 'edit-owner' | null;
+type View = 'board' | 'owners' | 'users' | 'property';
+type Modal = 'add-property' | 'add-owner' | 'add-user' | 'edit-property' | 'edit-owner' | null;
 
 export default function App() {
   const [status, setStatus] = useState<AuthStatus>('checking');
@@ -117,6 +119,8 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
   const [returnView, setReturnView] = useState<View>('board');
   const [modal, setModal] = useState<Modal>(null);
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const isPm = me.role === 'pm';
 
   async function refresh() {
     const [p, o] = await Promise.all([fetchProperties(), fetchOwners()]);
@@ -128,6 +132,15 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    if (isPm) fetchUsers().then(setUsers);
+  }, [isPm]);
+
+  async function handleRemoveUser(id: string) {
+    await deleteUser(id);
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+  }
 
   const ownerById = new Map(owners.map((o) => [o.id, o]));
   const selectedProperty = selectedPropertyId ? properties.find((p) => p.id === selectedPropertyId) ?? null : null;
@@ -187,6 +200,19 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               Owners
               <span className="count">{owners.length}</span>
             </button>
+            {isPm && (
+              <button
+                className={`filter-item${view === 'users' ? ' active' : ''}`}
+                onClick={() => {
+                  setView('users');
+                  setSelectedPropertyId(null);
+                  setSelectedOwnerId(null);
+                }}
+              >
+                Users
+                <span className="count">{users.length}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -212,23 +238,35 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                   ? selectedOwner
                     ? ownerDisplayName(selectedOwner)
                     : 'Owners'
-                  : 'Pipeline board'}
+                  : view === 'users'
+                    ? 'Users'
+                    : 'Pipeline board'}
             </h1>
             <div className="sub">
               {view === 'board' && 'Track every lead from first contact to lease.'}
               {view === 'owners' && (selectedOwner ? 'Owner detail' : 'Landlords, agents, and companies you work with.')}
+              {view === 'users' && 'Who can sign in to Upkeep.'}
               {view === 'property' && 'Property detail'}
             </div>
           </div>
-          {view !== 'property' && !selectedOwner && (
+          {view === 'users' ? (
             <div className="topbar-actions">
-              <button className="btn" onClick={() => setModal('add-owner')}>
-                + Add Owner
-              </button>
-              <button className="btn btn-primary" onClick={() => setModal('add-property')}>
-                + Add Property
+              <button className="btn btn-primary" onClick={() => setModal('add-user')}>
+                + Add User
               </button>
             </div>
+          ) : (
+            view !== 'property' &&
+            !selectedOwner && (
+              <div className="topbar-actions">
+                <button className="btn" onClick={() => setModal('add-owner')}>
+                  + Add Owner
+                </button>
+                <button className="btn btn-primary" onClick={() => setModal('add-property')}>
+                  + Add Property
+                </button>
+              </div>
+            )
           )}
         </div>
 
@@ -249,6 +287,8 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
             ) : (
               <OwnersList owners={owners} properties={properties} onOpenOwner={openOwner} />
             )
+          ) : view === 'users' ? (
+            <UsersList users={users} currentEmail={me.email} onRemove={handleRemoveUser} />
           ) : selectedProperty ? (
             <PropertyDetail
               property={selectedProperty}
@@ -307,6 +347,12 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
             handleOwnerUpdated(updated);
             setModal(null);
           }}
+        />
+      )}
+      {modal === 'add-user' && (
+        <AddUserModal
+          onClose={() => setModal(null)}
+          onCreated={(user) => setUsers((prev) => [user, ...prev])}
         />
       )}
     </div>

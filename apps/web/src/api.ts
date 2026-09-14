@@ -1,4 +1,4 @@
-import type { Owner, Property, ActivityEntry, Visit, Photo, NewOwnerInput } from './types.js';
+import type { Owner, Property, ActivityEntry, Visit, Photo, NewOwnerInput, AppUser, NewUserInput } from './types.js';
 
 export type Me = {
   email: string;
@@ -34,6 +34,25 @@ export function logout() {
 
 export function fetchMe() {
   return request<Me>('/me');
+}
+
+// ---------- Users ----------
+
+export function fetchUsers() {
+  return request<AppUser[]>('/users');
+}
+
+export function createUser(input: NewUserInput) {
+  return request<AppUser>('/users', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteUser(id: string) {
+  return request<{ ok: true }>(`/users/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 // ---------- Properties ----------

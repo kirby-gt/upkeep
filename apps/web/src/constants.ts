@@ -1,3 +1,9 @@
+export const USER_ROLES: Record<string, string> = {
+  pm: 'Property Manager',
+  maintenance: 'Maintenance',
+  tenant: 'Tenant',
+};
+
 export const REGIONS = [
   'Region 1 – Barima-Waini',
   'Region 2 – Pomeroon-Supenaam',
