@@ -129,11 +129,17 @@ swapping to object storage (e.g. MinIO) later only touches this one file.
   session cookie, throws on non-2xx using the JSON `{error}` body).
 - No state library or component library — don't add one preemptively.
 
-**users table** currently doubles as the login table for every role (`pm`
-| `maintenance` | `tenant` stored as plain text, no enum/check constraint).
-Per `db/schema.ts`, Slice 5 and Slice 7 add dedicated staff/tenant tables —
-`users` stays the auth record for every human account regardless of role
-when that happens, so don't restructure it preemptively.
+**users table** currently doubles as the login table for every role (`admin`
+| `pm` | `maintenance` | `tenant` stored as plain text, no enum/check
+constraint). Per `db/schema.ts`, Slice 5 and Slice 7 add dedicated
+staff/tenant tables — `users` stays the auth record for every human account
+regardless of role when that happens, so don't restructure it preemptively.
+User management (`apps/api/src/routes/users.ts`) enforces a role hierarchy
+on top of that flat table: `admin` can create/view/remove any role; `pm` is
+scoped to the "lower tier" `maintenance`/`tenant` accounts only and can't
+see or touch `pm`/`admin` rows; everyone else gets a flat 403 off the whole
+route. Keep `apps/web/src/constants.ts`'s `USER_ROLES` / `CREATABLE_ROLES`
+in sync with that list the same way other enum-like values are mirrored.
 
 ## Roadmap context (docs/build-roadmap.html)
 

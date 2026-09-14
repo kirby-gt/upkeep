@@ -10,6 +10,7 @@ import AddPropertyModal from './components/AddPropertyModal.js';
 import AddOwnerModal from './components/AddOwnerModal.js';
 import AddUserModal from './components/AddUserModal.js';
 import { ownerDisplayName } from './lib/format.js';
+import { CREATABLE_ROLES } from './constants.js';
 
 type AuthStatus = 'checking' | 'signed-out' | 'signed-in';
 type View = 'board' | 'owners' | 'users' | 'property';
@@ -120,7 +121,8 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [returnView, setReturnView] = useState<View>('board');
   const [modal, setModal] = useState<Modal>(null);
   const [users, setUsers] = useState<AppUser[]>([]);
-  const isPm = me.role === 'pm';
+  const creatableRoles = CREATABLE_ROLES[me.role] ?? [];
+  const canManageUsers = creatableRoles.length > 0;
 
   async function refresh() {
     const [p, o] = await Promise.all([fetchProperties(), fetchOwners()]);
@@ -134,8 +136,8 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (isPm) fetchUsers().then(setUsers);
-  }, [isPm]);
+    if (canManageUsers) fetchUsers().then(setUsers);
+  }, [canManageUsers]);
 
   async function handleRemoveUser(id: string) {
     await deleteUser(id);
@@ -200,7 +202,7 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               Owners
               <span className="count">{owners.length}</span>
             </button>
-            {isPm && (
+            {canManageUsers && (
               <button
                 className={`filter-item${view === 'users' ? ' active' : ''}`}
                 onClick={() => {
@@ -351,6 +353,7 @@ function Workspace({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       )}
       {modal === 'add-user' && (
         <AddUserModal
+          creatableRoles={creatableRoles}
           onClose={() => setModal(null)}
           onCreated={(user) => setUsers((prev) => [user, ...prev])}
         />

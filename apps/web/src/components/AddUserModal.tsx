@@ -11,15 +11,17 @@ function generatePassword(length = 14): string {
 }
 
 export default function AddUserModal({
+  creatableRoles,
   onClose,
   onCreated,
 }: {
+  creatableRoles: string[];
   onClose: () => void;
   onCreated: (user: AppUser) => void;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState(generatePassword());
-  const [role, setRole] = useState('pm');
+  const [role, setRole] = useState(creatableRoles[0]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [createdUser, setCreatedUser] = useState<AppUser | null>(null);
@@ -88,9 +90,9 @@ export default function AddUserModal({
           <div className="field">
             <label>Role</label>
             <select value={role} onChange={(e) => setRole(e.target.value)}>
-              {Object.entries(USER_ROLES).map(([value, label]) => (
+              {creatableRoles.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {USER_ROLES[value] ?? value}
                 </option>
               ))}
             </select>

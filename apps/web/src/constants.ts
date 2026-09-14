@@ -1,7 +1,15 @@
 export const USER_ROLES: Record<string, string> = {
+  admin: 'Administrator',
   pm: 'Property Manager',
   maintenance: 'Maintenance',
   tenant: 'Tenant',
+};
+
+// Mirrors the hierarchy enforced server-side in apps/api/src/routes/users.ts:
+// admin can create any role; pm is scoped to the "lower tier" roles only.
+export const CREATABLE_ROLES: Record<string, string[]> = {
+  admin: ['admin', 'pm', 'maintenance', 'tenant'],
+  pm: ['maintenance', 'tenant'],
 };
 
 export const REGIONS = [

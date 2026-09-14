@@ -12,9 +12,12 @@ import {
 
 // ---------- Slice 0 ----------
 
-// role is a plain text column for now ('pm' | 'maintenance' | 'tenant');
-// Slice 5 and 7 add real staff/tenant tables — this stays the login table
-// for every human account regardless of role.
+// role is a plain text column for now ('admin' | 'pm' | 'maintenance' |
+// 'tenant'); Slice 5 and 7 add real staff/tenant tables — this stays the
+// login table for every human account regardless of role. admin has
+// unrestricted access to user management; pm is scoped to creating and
+// managing the "lower tier" maintenance/tenant accounts (see
+// routes/users.ts) and can't touch pm or admin accounts.
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),

@@ -12,7 +12,7 @@ const PRIMARY_EMAIL = process.env.SEED_PM_EMAIL ?? 'steve@upkeep.local';
 const PRIMARY_PASSWORD = process.env.SEED_PM_PASSWORD ?? 'upkeep-dev';
 
 const SAMPLE_USERS = [
-  { email: PRIMARY_EMAIL, password: PRIMARY_PASSWORD, role: 'pm' },
+  { email: PRIMARY_EMAIL, password: PRIMARY_PASSWORD, role: 'admin' },
   { email: 'maria@upkeep.local', password: 'upkeep-dev', role: 'pm' },
   { email: 'raj@upkeep.local', password: 'upkeep-dev', role: 'maintenance' },
   { email: 'tenant@upkeep.local', password: 'upkeep-dev', role: 'tenant' },

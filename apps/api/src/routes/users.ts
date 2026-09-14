@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '../db/client.js';
 import { requireAuth } from '../auth/middleware.js';
 import type { AuthedVariables } from '../auth/middleware.js';
@@ -9,9 +9,15 @@ export const usersRoute = new Hono<{ Variables: AuthedVariables }>();
 
 usersRoute.use('*', requireAuth);
 
-// role stays plain text on the shared `users` table (see db/schema.ts) —
-// this is the list of values the management portal is allowed to assign.
-const ROLES = ['pm', 'maintenance', 'tenant'] as const;
+// role stays plain text on the shared `users` table (see db/schema.ts).
+// Hierarchy: admin can see/create/remove any role; pm is scoped to the
+// "lower tiers" (maintenance, tenant) and can't touch pm or admin
+// accounts. Everyone else gets a flat 403 off this whole route.
+const LOWER_TIER_ROLES = ['maintenance', 'tenant'] as const;
+const CREATABLE_ROLES: Record<string, readonly string[]> = {
+  admin: ['admin', 'pm', ...LOWER_TIER_ROLES],
+  pm: LOWER_TIER_ROLES,
+};
 
 const SAFE_COLUMNS = {
   id: schema.users.id,
@@ -20,21 +26,33 @@ const SAFE_COLUMNS = {
   createdAt: schema.users.createdAt,
 };
 
-// User management is a PM-only capability — everyone else still just
-// gets requireAuth like every other route.
-function isPm(c: { get: (key: 'user') => typeof schema.users.$inferSelect }) {
-  return c.get('user').role === 'pm';
+type Role = keyof typeof CREATABLE_ROLES;
+
+function managedRoles(c: { get: (key: 'user') => typeof schema.users.$inferSelect }): readonly string[] | null {
+  const role = c.get('user').role;
+  return CREATABLE_ROLES[role as Role] ?? null;
 }
 
 usersRoute.get('/users', async (c) => {
-  if (!isPm(c)) return c.json({ error: 'Only property managers can view the user list.' }, 403);
+  const role = c.get('user').role;
+  const allowed = managedRoles(c);
+  if (!allowed) return c.json({ error: 'You do not have access to user management.' }, 403);
 
-  const rows = await db.select(SAFE_COLUMNS).from(schema.users).orderBy(desc(schema.users.createdAt));
+  const rows =
+    role === 'admin'
+      ? await db.select(SAFE_COLUMNS).from(schema.users).orderBy(desc(schema.users.createdAt))
+      : await db
+          .select(SAFE_COLUMNS)
+          .from(schema.users)
+          .where(inArray(schema.users.role, [...allowed]))
+          .orderBy(desc(schema.users.createdAt));
+
   return c.json(rows);
 });
 
 usersRoute.post('/users', async (c) => {
-  if (!isPm(c)) return c.json({ error: 'Only property managers can add users.' }, 403);
+  const allowed = managedRoles(c);
+  if (!allowed) return c.json({ error: 'You do not have access to user management.' }, 403);
 
   const body = await c.req.json().catch(() => null);
   const email = String(body?.email ?? '').trim().toLowerCase();
@@ -47,8 +65,8 @@ usersRoute.post('/users', async (c) => {
   if (password.length < 8) {
     return c.json({ error: 'Password must be at least 8 characters.' }, 400);
   }
-  if (!ROLES.includes(role)) {
-    return c.json({ error: `Role must be one of: ${ROLES.join(', ')}` }, 400);
+  if (!allowed.includes(role)) {
+    return c.json({ error: `You can only create users with one of these roles: ${allowed.join(', ')}` }, 403);
   }
 
   const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email)).limit(1);
@@ -65,15 +83,20 @@ usersRoute.post('/users', async (c) => {
 });
 
 usersRoute.delete('/users/:id', async (c) => {
-  if (!isPm(c)) return c.json({ error: 'Only property managers can remove users.' }, 403);
+  const allowed = managedRoles(c);
+  if (!allowed) return c.json({ error: 'You do not have access to user management.' }, 403);
 
   const id = c.req.param('id');
   if (id === c.get('user').id) {
     return c.json({ error: 'You cannot remove your own account.' }, 400);
   }
 
-  const [row] = await db.delete(schema.users).where(eq(schema.users.id, id)).returning({ id: schema.users.id });
-  if (!row) return c.json({ error: 'User not found.' }, 404);
+  const [target] = await db.select({ role: schema.users.role }).from(schema.users).where(eq(schema.users.id, id)).limit(1);
+  if (!target) return c.json({ error: 'User not found.' }, 404);
+  if (!allowed.includes(target.role)) {
+    return c.json({ error: 'You do not have permission to remove this user.' }, 403);
+  }
 
+  await db.delete(schema.users).where(eq(schema.users.id, id));
   return c.json({ ok: true });
 });
